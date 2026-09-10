@@ -5,9 +5,8 @@ pydantic
 # Environment variables
 python-dotenv
 
-# Azure Cloud Services & OpenTelemetry
-azure-monitor-opentelemetry
-azure-identity
+# AWS Cloud Services
+boto3
 
 # LangChain & LangGraph Framework
 langchain
