@@ -41,15 +41,15 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
             raise Exception("Please provide a valid YouTube URL for this test.")
 
         # 2. UPLOAD
-        azure_video_id = vi_service.upload_video(local_path, video_name=video_id_input)
-        logger.info(f"Upload Success. Azure ID: {azure_video_id}")
+        s3_video_key = vi_service.upload_video(local_path, video_name=video_id_input)
+        logger.info(f"Upload Success. s3 video key: {s3_video_key}")
         
         # 3. CLEANUP
         if os.path.exists(local_path):
             os.remove(local_path)
 
         # 4. WAIT
-        raw_insights = vi_service.wait_for_processing(azure_video_id)
+        raw_insights = vi_service.wait_for_processing(s3_video_key)
         
         # 5. EXTRACT
         clean_data = vi_service.extract_data(raw_insights)
