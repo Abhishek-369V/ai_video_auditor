@@ -1,15 +1,18 @@
 import os
 import time
 import logging
+import json
+import urllib.request
 import boto3
-import yt_dlp  
+import yt_dlp
 
 logger = logging.getLogger("video-indexer")
+
 
 class VideoIndexerService:
     def __init__(self):
         self.bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
-        self.region = os.getenv("AWS_DEFAULT_REGION", "ap-south-2")
+        self.region = os.getenv("AWS_DEFAULT_REGION", "ap-south-1")
 
         if not self.bucket_name:
             raise Exception("AWS_S3_BUCKET_NAME not set in .env")
@@ -45,7 +48,12 @@ class VideoIndexerService:
     # --- Upload to S3 (replaces Azure upload) ---
     def upload_video(self, video_path, video_name):
         """Uploads a LOCAL FILE to S3. Returns the S3 key (used as 'video_id')."""
-        s3_key = f"videos/{video_name}.mp4"
+
+        # Double extension bug - direct s3_key - happens to work, but
+        # the moment someone passes a filename with an extension, we get videos/test_video.mp4.mp4.
+        # so we strip to fix this:
+        base_name = os.path.splitext(video_name)[0]
+        s3_key = f"videos/{base_name}.mp4"
 
         logger.info(f"Uploading {video_path} to s3://{self.bucket_name}/{s3_key}...")
         try:
@@ -59,8 +67,9 @@ class VideoIndexerService:
     def wait_for_processing(self, video_id):
         """
         video_id here = S3 key returned by upload_video().
-        Starts Rekognition text-in-video detection + Amazon Transcribe,
-        polls both until COMPLETED, returns a combined raw result dict.
+        Starts Rekognition text-in-video detection + Amazon Transcribe concurrently, 
+        then polls BOTH in a single interleaved loop so a failure in one job is detected
+        without leaving the other running orphaned in the background.
         """
         s3_key = video_id
         job_tag = s3_key.replace("/", "_").replace(".", "_")
@@ -83,42 +92,65 @@ class VideoIndexerService:
             LanguageCode="en-US",
         )
 
-        # 3. Poll Rekognition
-        rek_result = None
+        rek_status = "IN_PROGRESS"
+        transcribe_status = "IN_PROGRESS"
+        rek_final_response = None
+        transcript_text = ""
+
+        # 3. Interleaved polling: check both jobs each cycle, 
+        # stop as soon as EITHER fails (cleanly, without abandoning the other job unchecked).
         while True:
-            resp = self.rekognition_client.get_text_detection(JobId=rek_job_id)
-            status = resp["JobStatus"]
-            if status == "SUCCEEDED":
-                rek_result = resp
+            if rek_status not in ("SUCCEEDED", "FAILED"):
+                resp = self.rekognition_client.get_text_detection(JobId=rek_job_id)
+                rek_status = resp["JobStatus"]
+                if rek_status == "SUCCEEDED":
+                    rek_final_response = resp
+
+            if transcribe_status not in ("COMPLETED", "FAILED"):
+                job = self.transcribe_client.get_transcription_job(
+                    TranscriptionJobName=transcribe_job_name
+                )
+                transcribe_status = job["TranscriptionJob"]["TranscriptionJobStatus"]
+                if transcribe_status == "COMPLETED":
+                    transcript_uri = job["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
+                    with urllib.request.urlopen(transcript_uri) as f:
+                        transcript_json = json.loads(f.read().decode())
+                    transcript_text = transcript_json["results"]["transcripts"][0]["transcript"]
+
+            if rek_status == "FAILED":
+                raise Exception(
+                    f"Rekognition text detection job failed. "
+                    f"(Transcribe job '{transcribe_job_name}' status at failure: {transcribe_status})"
+                )
+            if transcribe_status == "FAILED":
+                raise Exception(
+                    f"Transcribe job failed. "
+                    f"(Rekognition job status at failure: {rek_status})"
+                )
+
+            if rek_status == "SUCCEEDED" and transcribe_status == "COMPLETED":
                 break
-            elif status == "FAILED":
-                raise Exception("Rekognition text detection job failed.")
-            logger.info(f"Rekognition status: {status}... waiting 15s")
+
+            logger.info(f"Rekognition: {rek_status} | Transcribe: {transcribe_status} — waiting 15s")
             time.sleep(15)
 
-        # 4. Poll Transcribe
-        transcript_text = ""
-        while True:
-            job = self.transcribe_client.get_transcription_job(
-                TranscriptionJobName=transcribe_job_name
+        if not rek_final_response:
+            raise Exception("Rekognition finished without returning a valid response payload.")
+
+        # 4. Paginate through ALL Rekognition text detection pages (NextToken)
+        all_text_detections = list(rek_final_response.get("TextDetections", []))
+        next_token = rek_final_response.get("NextToken")
+        while next_token:
+            page = self.rekognition_client.get_text_detection(
+                JobId=rek_job_id, NextToken=next_token
             )
-            status = job["TranscriptionJob"]["TranscriptionJobStatus"]
-            if status == "COMPLETED":
-                transcript_uri = job["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
-                import urllib.request, json as jsonlib
-                with urllib.request.urlopen(transcript_uri) as f:
-                    transcript_json = jsonlib.loads(f.read().decode())
-                transcript_text = transcript_json["results"]["transcripts"][0]["transcript"]
-                break
-            elif status == "FAILED":
-                raise Exception("Transcribe job failed.")
-            logger.info(f"Transcribe status: {status}... waiting 15s")
-            time.sleep(15)
+            all_text_detections.extend(page.get("TextDetections", []))
+            next_token = page.get("NextToken")
 
         return {
-            "rekognition_text_detections": rek_result.get("TextDetections", []),
+            "rekognition_text_detections": all_text_detections,
             "transcript_text": transcript_text,
-            "video_metadata_raw": rek_result.get("VideoMetadata", {}),
+            "video_metadata_raw": rek_final_response.get("VideoMetadata", {}),
         }
 
     # --- Extract data into the same output shape as before ---
