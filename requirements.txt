@@ -24,3 +24,9 @@ yt-dlp
 faiss-cpu
 sentence-transformers
 langchain-huggingface
+
+# doc loader
+pypdf
+
+# LLM
+langchain-aws
