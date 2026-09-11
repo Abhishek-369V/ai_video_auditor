@@ -88,10 +88,10 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     
     # Retrieve top relevant rule chunks
     relevant_chunks = retriever.retrieve(query_text, k=4)
-    retrieved_rules = "\n\n".join([doc.page_content for doc in relevant_chunks])
+    retrieved_rules = "\n\n".join([chunk["content"] for chunk in relevant_chunks]) 
 
     # 2. Initialize Amazon Bedrock (Claude 3 Haiku for cost efficiency)
-    region = os.getenv("AWS_DEFAULT_REGION", "ap-south-1")
+    region = os.getenv("AWS_DEFAULT_REGION", "ap-south-2")
     llm = ChatBedrock(
         model_id="anthropic.claude-3-haiku-20240307-v1:0",
         region_name=region,
