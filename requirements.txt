@@ -19,3 +19,8 @@ langgraph
 # HTTP Requests & Video Downloading
 requests
 yt-dlp
+
+# FAISS search
+faiss-cpu
+sentence-transformers
+langchain-huggingface
