@@ -1,39 +1,37 @@
 import json
 import os
 import logging
-import re  # <--- Added Regex for cleaning
+import re
 from typing import Dict, Any, List
 
-from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
-from langchain_community.vectorstores import AzureSearch
-# from langchain_core.prompts import ChatPromptTemplate
+from langchain_aws import ChatBedrock
 from langchain_core.messages import SystemMessage, HumanMessage
 
-# Import the State schema .
+# State & Services
 from backend.src.graph.state import VideoAuditState
-
-# Import the Service
 from backend.src.services.video_indexer import VideoIndexerService
+from backend.src.services.retriever import ComplianceRetriever
 
 # Configure Logger
 logger = logging.getLogger("brand-guardian")
 logging.basicConfig(level=logging.INFO)
 
+
 # --- NODE 1: THE INDEXER ---
 def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
     """
-    Downloads YouTube video, uploads to Azure VI, and extracts insights.
+    Downloads YouTube video, uploads to AWS S3, and extracts OCR + Audio transcription.
     """
     video_url = state.get("video_url")
     video_id_input = state.get("video_id", "vid_demo")
-    
+
     logger.info(f"--- [Node: Indexer] Processing: {video_url} ---")
-    
+
     local_filename = "temp_audit_video.mp4"
-    
+
     try:
         vi_service = VideoIndexerService()
-        
+
         # 1. DOWNLOAD
         if "youtube.com" in video_url or "youtu.be" in video_url:
             local_path = vi_service.download_youtube_video(video_url, output_path=local_filename)
@@ -42,18 +40,18 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
 
         # 2. UPLOAD
         s3_video_key = vi_service.upload_video(local_path, video_name=video_id_input)
-        logger.info(f"Upload Success. s3 video key: {s3_video_key}")
-        
-        # 3. CLEANUP
+        logger.info(f"Upload Success. S3 video key: {s3_video_key}")
+
+        # 3. CLEANUP LOCAL FILE
         if os.path.exists(local_path):
             os.remove(local_path)
 
-        # 4. WAIT
+        # 4. WAIT & PROCESS (Rekognition + Transcribe)
         raw_insights = vi_service.wait_for_processing(s3_video_key)
-        
+
         # 5. EXTRACT
         clean_data = vi_service.extract_data(raw_insights)
-        
+
         logger.info("--- [Node: Indexer] Extraction Complete ---")
         return clean_data
 
@@ -62,19 +60,20 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
         return {
             "errors": [str(e)],
             "final_status": "FAIL",
-            "transcript": "", 
+            "transcript": "",
             "ocr_text": []
         }
+
 
 # --- NODE 2: THE COMPLIANCE AUDITOR ---
 def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     """
-    Performs Retrieval-Augmented Generation (RAG) to audit the content.
+    Performs Retrieval-Augmented Generation (RAG) using local FAISS and Amazon Bedrock.
     """
-    logger.info("--- [Node: Auditor] querying Knowledge Base & LLM ---")
-    
+    logger.info("--- [Node: Auditor] Querying Knowledge Base & LLM ---")
+
     transcript = state.get("transcript", "")
-    
+
     if not transcript:
         logger.warning("No transcript available. Skipping Audit.")
         return {
@@ -82,44 +81,35 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
             "final_report": "Audit skipped because video processing failed (No Transcript)."
         }
 
-    # Initialize Clients
-    llm = AzureChatOpenAI(
-        azure_deployment=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT"),
-        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-        temperature=0.0
-    )
-
-    embeddings = AzureOpenAIEmbeddings(
-        azure_deployment="text-embedding-3-small",
-        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-    )
-
-    vector_store = AzureSearch(
-        azure_search_endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
-        azure_search_key=os.getenv("AZURE_SEARCH_API_KEY"),
-        index_name=os.getenv("AZURE_SEARCH_INDEX_NAME"),
-        embedding_function=embeddings.embed_query
-    )
-    
-    # RAG Retrieval
+    # 1. Local FAISS Retrieval
+    retriever = ComplianceRetriever()
     ocr_text = state.get("ocr_text", [])
     query_text = f"{transcript} {' '.join(ocr_text)}"
-    docs = vector_store.similarity_search(query_text, k=3)
     
-    retrieved_rules = "\n\n".join([doc.page_content for doc in docs])
-    
-    # --- UPDATED PROMPT WITH STRICT SCHEMA ---
+    # Retrieve top relevant rule chunks
+    relevant_chunks = retriever.retrieve(query_text, k=4)
+    retrieved_rules = "\n\n".join([doc.page_content for doc in relevant_chunks])
+
+    # 2. Initialize Amazon Bedrock (Claude 3 Haiku for cost efficiency)
+    region = os.getenv("AWS_DEFAULT_REGION", "ap-south-1")
+    llm = ChatBedrock(
+        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        region_name=region,
+        model_kwargs={"temperature": 0.0, "max_tokens": 2048}
+    )
+
+    # 3. Prompt Construction
     system_prompt = f"""
     You are a Senior Brand Compliance Auditor.
-    
+
     OFFICIAL REGULATORY RULES:
     {retrieved_rules}
-    
+
     INSTRUCTIONS:
     1. Analyze the Transcript and OCR text below.
     2. Identify ANY violations of the rules.
-    3. Return strictly JSON in the following format:
-    
+    3. Return strictly valid JSON in the following format:
+
     {{
         "compliance_results": [
             {{
@@ -128,7 +118,7 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
                 "description": "Explanation of the violation..."
             }}
         ],
-        "status": "FAIL", 
+        "status": "FAIL",
         "final_report": "Summary of findings..."
     }}
 
@@ -146,15 +136,16 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
             SystemMessage(content=system_prompt),
             HumanMessage(content=user_message)
         ])
-        
-        # --- FIX: Clean Markdown if present (```json ... ```) ---
+
+        # 4. Clean Markdown formatting if present (```json ... ```)
         content = response.content
         if "```" in content:
-            # Regex to find JSON inside code blocks
-            content = re.search(r"```(?:json)?(.*?)```", content, re.DOTALL).group(1)
-            
+            match = re.search(r"```(?:json)?(.*?)```", content, re.DOTALL)
+            if match:
+                content = match.group(1)
+
         audit_data = json.loads(content.strip())
-        
+
         return {
             "compliance_results": audit_data.get("compliance_results", []),
             "final_status": audit_data.get("status", "FAIL"),
@@ -163,8 +154,8 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"System Error in Auditor Node: {str(e)}")
-        # Log the raw response to see what went wrong
-        logger.error(f"Raw LLM Response: {response.content if 'response' in locals() else 'None'}")
+        raw_llm = response.content if "response" in locals() else "None"
+        logger.error(f"Raw LLM Response: {raw_llm}")
         return {
             "errors": [str(e)],
             "final_status": "FAIL"
