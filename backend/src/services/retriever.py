@@ -1,5 +1,5 @@
-import os
 import logging
+from pathlib import Path
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
@@ -10,14 +10,15 @@ EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 class ComplianceRetriever:
     def __init__(self, index_path=None):
         if index_path is None:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            index_path = os.path.join(current_dir, "../../data/faiss_index")
+            index_path = Path(__file__).resolve().parent.parent.parent / "data" / "faiss_index"
+        else:
+            index_path = Path(index_path).resolve()
 
         logger.info(f"Loading FAISS index from: {index_path}")
         embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
 
         self.vector_store = FAISS.load_local(
-            index_path,
+            str(index_path),  # FAISS load_local expects a str
             embeddings,
             allow_dangerous_deserialization=True  # safe: it's our own locally-built index
         )
