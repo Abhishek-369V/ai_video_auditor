@@ -2,9 +2,9 @@ import json
 import os
 import logging
 import re
-from typing import Dict, Any, List
+from typing import Dict, Any
 
-from langchain_aws import ChatBedrock
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 
 # State & Services
@@ -68,7 +68,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
 # --- NODE 2: THE COMPLIANCE AUDITOR ---
 def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     """
-    Performs Retrieval-Augmented Generation (RAG) using local FAISS and Amazon Bedrock.
+    Performs Retrieval-Augmented Generation (RAG) using local FAISS and Groq.
     """
     logger.info("--- [Node: Auditor] Querying Knowledge Base & LLM ---")
 
@@ -90,12 +90,11 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     relevant_chunks = retriever.retrieve(query_text, k=4)
     retrieved_rules = "\n\n".join([chunk["content"] for chunk in relevant_chunks]) 
 
-    # 2. Initialize Amazon Bedrock (Claude 3 Haiku for cost efficiency)
-    region = os.getenv("AWS_DEFAULT_REGION", "ap-south-2")
-    llm = ChatBedrock(
-        model_id="anthropic.claude-3-haiku-20240307-v1:0",
-        region_name=region,
-        model_kwargs={"temperature": 0.0, "max_tokens": 2048}
+    # 2. Initialize Groq (cost efficiency)
+    llm = ChatGroq(
+        model="llama-3.1-8b-instant",
+        temperature=0.0,
+        max_tokens=2048,
     )
 
     # 3. Prompt Construction

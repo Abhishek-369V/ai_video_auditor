@@ -71,7 +71,7 @@ def run_cli_simulation():
     }
 
     # ========== DISPLAY SECTION: INPUT SUMMARY ==========
-    print("\n--- 1.nput Payload: INITIALIZING WORKFLOW ---")
+    print("\n--- 1.Input Payload: INITIALIZING WORKFLOW ---")
     # json.dumps() converts Python dict to formatted JSON string
     # indent=2 makes it readable with 2-space indentation
     print(f"I {json.dumps(initial_inputs, indent=2)}")
