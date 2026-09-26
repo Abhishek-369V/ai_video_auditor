@@ -20,7 +20,8 @@ logging.basicConfig(level=logging.INFO)
 # --- NODE 1: THE INDEXER ---
 def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
     """
-    Downloads YouTube video, uploads to AWS S3, and extracts OCR + Audio transcription.
+    Downloads YouTube video, transcribes it locally with Whisper, uploads
+    to AWS S3, and runs Rekognition text detection (OCR) on it.
     """
     video_url = state.get("video_url")
     video_id_input = state.get("video_id", "vid_demo")
@@ -38,19 +39,24 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
         else:
             raise Exception("Please provide a valid YouTube URL for this test.")
 
-        # 2. UPLOAD
+        # 2. TRANSCRIBE LOCALLY (must happen BEFORE the local file is deleted)
+        transcript_text = vi_service.transcribe_locally(local_path)
+        logger.info(f"Local transcription complete ({len(transcript_text)} chars).")
+
+        # 3. UPLOAD to S3 (for Rekognition OCR)
         s3_video_key = vi_service.upload_video(local_path, video_name=video_id_input)
         logger.info(f"Upload Success. S3 video key: {s3_video_key}")
 
-        # 3. CLEANUP LOCAL FILE
+        # 4. CLEANUP LOCAL FILE (safe now — transcription already done)
         if os.path.exists(local_path):
             os.remove(local_path)
 
-        # 4. WAIT & PROCESS (Rekognition + Transcribe)
+        # 5. WAIT & PROCESS (Rekognition text detection only)
         raw_insights = vi_service.wait_for_processing(s3_video_key)
 
-        # 5. EXTRACT
+        # 6. EXTRACT (OCR + metadata) and inject the local transcript
         clean_data = vi_service.extract_data(raw_insights)
+        clean_data["transcript"] = transcript_text
 
         logger.info("--- [Node: Indexer] Extraction Complete ---")
         return clean_data
@@ -68,7 +74,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
 # --- NODE 2: THE COMPLIANCE AUDITOR ---
 def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     """
-    Performs Retrieval-Augmented Generation (RAG) using local FAISS and Groq.
+    Performs Retrieval-Augmented Generation (RAG) using local FAISS and Groq (GPT-OSS 20B).
     """
     logger.info("--- [Node: Auditor] Querying Knowledge Base & LLM ---")
 
@@ -85,16 +91,15 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     retriever = ComplianceRetriever()
     ocr_text = state.get("ocr_text", [])
     query_text = f"{transcript} {' '.join(ocr_text)}"
-    
-    # Retrieve top relevant rule chunks
-    relevant_chunks = retriever.retrieve(query_text, k=4)
-    retrieved_rules = "\n\n".join([chunk["content"] for chunk in relevant_chunks]) 
 
-    # 2. Initialize Groq (cost efficiency)
+    relevant_chunks = retriever.retrieve(query_text, k=4)
+    retrieved_rules = "\n\n".join([chunk["content"] for chunk in relevant_chunks])
+
+    # 2. Initialize Groq
     llm = ChatGroq(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         temperature=0.0,
-        max_tokens=2048,
+        max_tokens=4096,
     )
 
     # 3. Prompt Construction
