@@ -22,7 +22,7 @@ class ComplianceRetriever:
             embeddings,
             allow_dangerous_deserialization=True  # safe: it's our own locally-built index
         )
-        logger.info("✓ FAISS index loaded")
+        logger.info("[SUCCESS] FAISS index loaded")
 
     def retrieve(self, query, k=4):
         """Returns top-k relevant chunks for a query, with source metadata."""
