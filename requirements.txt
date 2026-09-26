@@ -1,32 +1,40 @@
 # Web Framework & Validation
 fastapi
 pydantic
+pydantic-settings
 
-# Environment variables
+# Environment Variables & Testing
 python-dotenv
+pytest
 
-# AWS Cloud Services
+# Observability & Tracing
+langsmith
+
+# Cloud & Storage
 boto3
 
 # LangChain & LangGraph Framework
 langchain
-langchain-openai
+langchain-core
 langchain-community
 langchain-text-splitters
-langchain-core
 langgraph
 
-# HTTP Requests & Video Downloading
-requests
-yt-dlp
+# LLM Providers
+langchain-groq
+groq
+langchain-aws
+langchain-openai
 
-# FAISS search
+# Audio Transcription
+openai-whisper
+
+# Vector Search & Embeddings
 faiss-cpu
 sentence-transformers
 langchain-huggingface
 
-# doc loader
+# Ingestion, Parsing & HTTP
+requests
+yt-dlp
 pypdf
-
-# LLM
-langchain-aws
