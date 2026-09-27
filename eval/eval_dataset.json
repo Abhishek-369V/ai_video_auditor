@@ -1,13 +1,56 @@
 [
   {
-    "question": "Does this video comply with brand safety and advertising claim policies? VIDEO METADATA: {'duration': 30.03, 'platform': 'youtube'} TRANSCRIPT: Hi, I'm Dr. Nira. Here at an interview, John Cena, the new face of Neutrogena Ultra Sheer Stenscream. What's up? Let's do this. But as you can see, he flaked. What? I'm right here. Anyway, Ultra Sheer gives you high SPF protection, and it has an invisible finish. Hello. You can't see it. And cut. You know you can't do that. Reddish break, fuck. You can't see me. It's my time now. Now. You can't see me. It's my time now.",
+    "question": "Does this video comply with brand safety and advertising claim policies? TRANSCRIPT: Hi, I'm Dr. Nira. Here at an interview, John Cena, the new face of Neutrogena Ultra Sheer Stenscream. What's up? Let's do this. But as you can see, he flaked. What? I'm right here. Anyway, Ultra Sheer gives you high SPF protection, and it has an invisible finish. ON-SCREEN TEXT (OCR): Neutrogena, Dermatology, ULTRA, SHEER, Face Liquid, Sunscreen, Neutrogena Ultra Sheer, Sunscreen you can't see.",
     "contexts": [
-      "Neutrogena", "Dermatology", "ULTRA", "SHEER",
-      "Face Liquid", "NEW", "Sunscreen",
-      "Neutrogena Ultra Sheer:", "Neutrogena®",
-      "Sunscreen you can't see."
+      "All measurable product claims (SPF value, efficacy percentages, performance comparisons) must be substantiated with verifiable test data or a visible disclaimer. Unverified quantitative claims are prohibited.",
+      "Celebrity or public-figure endorsements used in advertising must include a clear, conspicuous disclosure that the endorsement is paid or sponsored, in accordance with FTC-style disclosure requirements.",
+      "Brand and product names must be represented accurately and consistently across transcript, on-screen text, and packaging. Misspelled or altered product names that could mislead consumers are not permitted."
     ],
-    "answer": "The video fails compliance review. It has two violations. First, a Claim Validation issue rated CRITICAL: the transcript states that Neutrogena Ultra Sheer provides high SPF protection, which is a measurable claim that requires verification, and no evidence of verification is provided, potentially violating the rule that prohibits unverified claims. Second, a Brand Name Accuracy issue rated MAJOR: the transcript and OCR mention Neutrogena Ultra Sheer Stenscream, which appears to be a misspelling or non-existent product name, misrepresenting the brand and violating the requirement for accurate brand representation. Overall status: FAIL. The video contains potential violations, an unverified SPF claim and a misspelled product name, which must be corrected to comply with brand compliance and platform policies.",
-    "ground_truth": "Status should be FAIL. Two real issues: (1) \"high SPF protection\" claim with zero on-screen substantiation or disclaimer — unverified claim policy violation, CRITICAL. (2) OCR correctly captured \"Neutrogena\", but Whisper transcribed \"Stenscream\" instead of \"Sunscreen\" — likely a transcription hallucination. Separately, there is no paid-partnership disclosure anywhere for John Cena's endorsement — that is a real gap this answer missed and should be flagged as CRITICAL under disclosure policy. A profanity violation was flagged in an earlier run of this same video but is not verifiable from the transcript/OCR text alone and should not be treated as confirmed ground truth."
+    "answer": "The video fails compliance review. It has two violations. First, a Claim Validation issue rated CRITICAL: the transcript states that Neutrogena Ultra Sheer provides high SPF protection, which is a measurable claim that requires verification, and no evidence of verification is provided, potentially violating the rule that prohibits unverified claims. Second, a Brand Name Accuracy issue rated MAJOR: the transcript and OCR mention Neutrogena Ultra Sheer Stenscream, which appears to be a misspelling or non-existent product name, misrepresenting the brand and violating the requirement for accurate brand representation. Overall status: FAIL.",
+    "ground_truth": "Status should be FAIL. Two real issues: (1) the SPF claim has zero substantiation, CRITICAL. (2) OCR correctly captured Neutrogena, but Whisper transcribed Stenscream instead of Sunscreen, likely a transcription hallucination. Separately, there is no paid-partnership disclosure anywhere for John Cena's endorsement, that is a real gap this answer missed and should be flagged as CRITICAL under disclosure policy."
+  },
+
+  {
+    "question": "Does this video comply with brand safety and advertising claim policies? TRANSCRIPT: Try our new energy drink, it will double your focus instantly and cure your fatigue for good, guaranteed. No side effects at all. ON-SCREEN TEXT (OCR): PowerBoost Energy, 100% Natural, Guaranteed Results.",
+    "contexts": [
+      "All measurable product claims (SPF value, efficacy percentages, performance comparisons) must be substantiated with verifiable test data or a visible disclaimer. Unverified quantitative claims are prohibited.",
+      "Absolute or guarantee-style language (e.g. 'guaranteed', 'cures', 'instantly') is prohibited for consumable products unless backed by clinical evidence on file and reviewable on request.",
+      "Health-adjacent claims (curing fatigue, medical conditions, physiological effects) require a visible disclaimer stating the product has not been evaluated for medical claims, where applicable."
+    ],
+    "answer": "The video fails compliance review. There are two violations. First, a Claim Validation issue rated CRITICAL: the phrase 'double your focus instantly' is an unverified, absolute performance claim with no supporting evidence. Second, a Health Claim issue rated CRITICAL: the phrase 'cure your fatigue for good, guaranteed' makes an unverified health-adjacent guarantee with no clinical disclaimer, and the phrase 'no side effects at all' is an absolute safety claim that is not permitted without substantiation. Overall status: FAIL.",
+    "ground_truth": "Status should be FAIL. Three issues: (1) 'double your focus instantly' is an unverified absolute performance claim, CRITICAL. (2) 'cure your fatigue for good, guaranteed' is an unverified health claim using guarantee language, CRITICAL, no clinical disclaimer present. (3) 'no side effects at all' is an absolute safety claim, also unsubstantiated, and should be flagged separately as its own MAJOR violation since safety claims carry higher liability than general performance claims."
+  },
+
+  {
+    "question": "Does this video comply with brand safety and advertising claim policies? TRANSCRIPT: This is just my honest review of the SkinGlow serum I bought myself, I've been using it for two weeks and my skin feels smoother, results may vary. ON-SCREEN TEXT (OCR): SkinGlow Serum, Available at drugstores nationwide.",
+    "contexts": [
+      "All measurable product claims (SPF value, efficacy percentages, performance comparisons) must be substantiated with verifiable test data or a visible disclaimer. Unverified quantitative claims are prohibited.",
+      "Personal, subjective testimonials phrased as individual experience (e.g. 'my skin feels', 'in my experience') combined with a 'results may vary' disclaimer are generally acceptable and not treated as absolute claims.",
+      "Celebrity or public-figure endorsements used in advertising must include a clear, conspicuous disclosure that the endorsement is paid or sponsored, in accordance with FTC-style disclosure requirements."
+    ],
+    "answer": "The video passes compliance review. The claim 'my skin feels smoother' is phrased as a subjective personal testimonial rather than an absolute or measurable claim, and it is paired with a 'results may vary' disclaimer, which satisfies substantiation requirements for testimonial-style content. No brand name inaccuracies or missing disclosures were identified, as the speaker states this was self-purchased rather than a sponsored endorsement. Overall status: PASS.",
+    "ground_truth": "Status should be PASS. The testimonial is properly hedged with 'results may vary' and phrased as personal experience, not an absolute claim. Since the speaker explicitly says she bought it herself, no paid-endorsement disclosure is required. No violations here, this is a good example of compliant testimonial-style content."
+  },
+
+  {
+    "question": "Does this video comply with brand safety and advertising claim policies? TRANSCRIPT: Damn this new phone case is so good, it survived a drop from my roof, no cap, best case ever made, period. ON-SCREEN TEXT (OCR): ArmorShield Case, Drop Tested.",
+    "contexts": [
+      "Absolute or guarantee-style language (e.g. 'guaranteed', 'best ever', 'never fails') is prohibited unless backed by verifiable test data on file and reviewable on request.",
+      "Profanity, including mild expletives, used in ad content intended for general audiences may violate platform content policies depending on platform-specific guidelines and audience rating.",
+      "All measurable product claims (SPF value, efficacy percentages, performance comparisons) must be substantiated with verifiable test data or a visible disclaimer. Unverified quantitative claims are prohibited."
+    ],
+    "answer": "The video fails compliance review. There are two violations. First, a Claim Validation issue rated MAJOR: the phrase 'best case ever made, period' is an unverified absolute superiority claim with no supporting test data, though the on-screen 'Drop Tested' text partially supports the drop-survival claim itself. Second, a Content Policy issue rated MINOR: the video contains mild profanity ('damn') which may not be suitable depending on the platform's audience rating and content policy. Overall status: FAIL.",
+    "ground_truth": "Status should be FAIL, but severity needs adjusting. The 'best case ever made, period' claim should be CRITICAL, not MAJOR, since absolute superiority claims with zero substantiation are treated strictly. The drop-survival claim is partially supported by the 'Drop Tested' on-screen text, so that specific claim should not be flagged, only the superiority language. The mild profanity flag is reasonable as MINOR and platform-dependent."
+  },
+
+  {
+    "question": "Does this video comply with brand safety and advertising claim policies? TRANSCRIPT: Our new baby formula is clinically proven to boost immunity by 40 percent, tested in three independent labs. ON-SCREEN TEXT (OCR): PureStart Formula, Pediatrician Recommended.",
+    "contexts": [
+      "All measurable product claims (SPF value, efficacy percentages, performance comparisons) must be substantiated with verifiable test data or a visible disclaimer. Unverified quantitative claims are prohibited.",
+      "Claims involving infant or child health products require the highest substantiation standard: cited study sources, sample sizes, and peer-review status must be disclosed or made available on request.",
+      "Endorsement-style phrases (e.g. 'doctor recommended', 'pediatrician recommended') require a genuine, verifiable basis and must not imply broader medical consensus than actually exists."
+    ],
+    "answer": "The video fails compliance review. There are two violations. First, a Claim Validation issue rated CRITICAL: the '40 percent immunity boost, tested in three independent labs' claim is a specific quantitative health claim for an infant product with no cited study source, sample size, or peer-review status disclosed, which does not meet the elevated substantiation standard for child health products. Second, an Endorsement Accuracy issue rated MAJOR: 'Pediatrician Recommended' is an endorsement-style phrase with no verifiable basis shown for the recommendation. Overall status: FAIL.",
+    "ground_truth": "Status should be FAIL and severity is correct on both. The 40 percent immunity claim on an infant product with no cited sources is exactly the kind of claim that needs the highest scrutiny, CRITICAL is right. The 'Pediatrician Recommended' phrase without any verifiable basis is also a real violation, MAJOR is reasonable, could arguably be CRITICAL too given this is a child health product category."
   }
 ]
