@@ -8,9 +8,9 @@
     ],
     "response": "The video fails compliance review. It has two violations. First, a Claim Validation issue rated CRITICAL: the transcript states that Neutrogena Ultra Sheer provides high SPF protection, which is a measurable claim that requires verification, and no evidence of verification is provided, potentially violating the rule that prohibits unverified claims. Second, a Brand Name Accuracy issue rated MAJOR: the transcript and OCR mention Neutrogena Ultra Sheer Stenscream, which appears to be a misspelling or non-existent product name, misrepresenting the brand and violating the requirement for accurate brand representation. Overall status: FAIL.",
     "reference": "Status should be FAIL. Two real issues: (1) the SPF claim has zero substantiation, CRITICAL. (2) OCR correctly captured Neutrogena, but Whisper transcribed Stenscream instead of Sunscreen, likely a transcription hallucination. Separately, there is no paid-partnership disclosure anywhere for John Cena's endorsement, that is a real gap this answer missed and should be flagged as CRITICAL under disclosure policy.",
-    "faithfulness": null,
-    "answer_relevancy": 0.4148978356,
-    "context_precision": null
+    "faithfulness": 0.1538461538,
+    "answer_relevancy": 0.4171343667,
+    "context_precision": 1.0
   },
   {
     "user_input": "Does this video comply with brand safety and advertising claim policies? TRANSCRIPT: Try our new energy drink, it will double your focus instantly and cure your fatigue for good, guaranteed. No side effects at all. ON-SCREEN TEXT (OCR): PowerBoost Energy, 100% Natural, Guaranteed Results.",
@@ -21,8 +21,8 @@
     ],
     "response": "The video fails compliance review. There are two violations. First, a Claim Validation issue rated CRITICAL: the phrase 'double your focus instantly' is an unverified, absolute performance claim with no supporting evidence. Second, a Health Claim issue rated CRITICAL: the phrase 'cure your fatigue for good, guaranteed' makes an unverified health-adjacent guarantee with no clinical disclaimer, and the phrase 'no side effects at all' is an absolute safety claim that is not permitted without substantiation. Overall status: FAIL.",
     "reference": "Status should be FAIL. Three issues: (1) 'double your focus instantly' is an unverified absolute performance claim, CRITICAL. (2) 'cure your fatigue for good, guaranteed' is an unverified health claim using guarantee language, CRITICAL, no clinical disclaimer present. (3) 'no side effects at all' is an absolute safety claim, also unsubstantiated, and should be flagged separately as its own MAJOR violation since safety claims carry higher liability than general performance claims.",
-    "faithfulness": null,
-    "answer_relevancy": 0.3616657481,
+    "faithfulness": 0.4285714286,
+    "answer_relevancy": 0.363045804,
     "context_precision": 1.0
   },
   {
@@ -35,8 +35,8 @@
     "response": "The video passes compliance review. The claim 'my skin feels smoother' is phrased as a subjective personal testimonial rather than an absolute or measurable claim, and it is paired with a 'results may vary' disclaimer, which satisfies substantiation requirements for testimonial-style content. No brand name inaccuracies or missing disclosures were identified, as the speaker states this was self-purchased rather than a sponsored endorsement. Overall status: PASS.",
     "reference": "Status should be PASS. The testimonial is properly hedged with 'results may vary' and phrased as personal experience, not an absolute claim. Since the speaker explicitly says she bought it herself, no paid-endorsement disclosure is required. No violations here, this is a good example of compliant testimonial-style content.",
     "faithfulness": 0.2857142857,
-    "answer_relevancy": 0.5073308905,
-    "context_precision": null
+    "answer_relevancy": 0.5500307597,
+    "context_precision": 1.0
   },
   {
     "user_input": "Does this video comply with brand safety and advertising claim policies? TRANSCRIPT: Damn this new phone case is so good, it survived a drop from my roof, no cap, best case ever made, period. ON-SCREEN TEXT (OCR): ArmorShield Case, Drop Tested.",
@@ -60,8 +60,8 @@
     ],
     "response": "The video fails compliance review. There are two violations. First, a Claim Validation issue rated CRITICAL: the '40 percent immunity boost, tested in three independent labs' claim is a specific quantitative health claim for an infant product with no cited study source, sample size, or peer-review status disclosed, which does not meet the elevated substantiation standard for child health products. Second, an Endorsement Accuracy issue rated MAJOR: 'Pediatrician Recommended' is an endorsement-style phrase with no verifiable basis shown for the recommendation. Overall status: FAIL.",
     "reference": "Status should be FAIL and severity is correct on both. The 40 percent immunity claim on an infant product with no cited sources is exactly the kind of claim that needs the highest scrutiny, CRITICAL is right. The 'Pediatrician Recommended' phrase without any verifiable basis is also a real violation, MAJOR is reasonable, could arguably be CRITICAL too given this is a child health product category.",
-    "faithfulness": null,
+    "faithfulness": 0.0,
     "answer_relevancy": 0.404917037,
-    "context_precision": null
+    "context_precision": 1.0
   }
 ]

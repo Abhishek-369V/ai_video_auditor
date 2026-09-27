@@ -13,6 +13,8 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 
+from ragas.run_config import RunConfig
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ragas-eval")
 
@@ -56,11 +58,17 @@ def run_evaluation():
     ragas_embeddings = LangchainEmbeddingsWrapper(judge_embeddings)
 
     logger.info("Running RAGAS evaluation (faithfulness, answer_relevancy, context_precision)...")
+    # RunConfig: slows down and lengthens timeouts 
+    # so Groq's free-tier rate limit (429s) doesn't cause jobs to time out before they succeed on retry. 
+    # max_workers=1 forces sequential calls instead of parallel, which is slower overall but avoids bursts that trigger 429s.
+    run_config = RunConfig(timeout=180, max_retries=10, max_wait=60, max_workers=1)
+
     result = evaluate(
         dataset,
         metrics=[faithfulness, answer_relevancy, context_precision],
         llm=ragas_llm,
         embeddings=ragas_embeddings,
+        run_config=run_config,
     )
 
     result_df = result.to_pandas()
