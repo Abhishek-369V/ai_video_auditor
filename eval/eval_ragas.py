@@ -21,6 +21,12 @@ RESULTS_PATH = os.path.join(os.path.dirname(__file__), "ragas_results.json")
 
 
 def load_eval_dataset(path):
+    """
+    NOTE: the 'answer' field here is the audit result rewritten as plain prose, not the raw JSON the live pipeline returns. 
+    RAGAS's faithfulness metric extracts individual factual statements from 'answer' to check against retrieved context; 
+    it cannot parse structured JSON and silently returns NaN if given raw JSON. 
+    The prose rewrite preserves the exact same findings, just in sentence form, so faithfulness can score it.
+    """
     with open(path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
@@ -61,7 +67,9 @@ def run_evaluation():
     result_dict = result_df.to_dict(orient="records")
 
     with open(RESULTS_PATH, "w", encoding="utf-8") as f:
-        json.dump(result_dict, f, indent=2)
+        # Converts np.nan / float('nan') into valid JSON null
+        clean_dict = json.loads(result_df.to_json(orient="records"))
+        json.dump(clean_dict, f, indent=2)
 
     logger.info("=" * 60)
     logger.info("RAGAS Evaluation Complete")
