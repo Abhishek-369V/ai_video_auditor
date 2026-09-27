@@ -17,25 +17,15 @@ from dotenv import load_dotenv
 load_dotenv(override=True)  
 # Reads .env file and sets environment variables
 # override=True = .env values replace system environment variables
-# Example .env contents:
-#   AZURE_SEARCH_KEY=abc123
-#   APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...
 
 
-# ========== STEP 2: INITIALIZE TELEMETRY ==========
-from backend.src.api.telemetry import setup_telemetry
-setup_telemetry()  
-# ☝️ "Activates the sensors" - starts tracking all API activity
-# Must happen AFTER load_dotenv() but BEFORE creating FastAPI app
-
-
-# ========== STEP 3: IMPORT WORKFLOW GRAPH ==========
+# ========== STEP 2: IMPORT WORKFLOW GRAPH ==========
 from backend.src.graph.workflow import app as compliance_graph
 # Imports your LangGraph workflow (Indexer → Auditor)
 # Renamed to 'compliance_graph' to avoid confusion with FastAPI's 'app'
 
 
-# ========== STEP 4: CONFIGURE LOGGING ==========
+# ========== STEP 3: CONFIGURE LOGGING ==========
 logging.basicConfig(level=logging.INFO)  
 # Sets default log level (INFO = important events, not debug spam)
 
@@ -43,7 +33,7 @@ logger = logging.getLogger("api-server")
 # Creates named logger for this module
 
 
-# ========== STEP 5: CREATE FASTAPI APPLICATION ==========
+# ========== STEP 4: CREATE FASTAPI APPLICATION ==========
 app = FastAPI(
     # Metadata for auto-generated API documentation (Swagger UI)
     title="Brand Guardian AI API",
@@ -55,7 +45,7 @@ app = FastAPI(
 # - OpenAPI schema at http://localhost:8000/openapi.json
 
 
-# ========== STEP 6: DEFINE DATA MODELS (PYDANTIC) ==========
+# ========== STEP 5: DEFINE DATA MODELS (PYDANTIC) ==========
 
 # --- REQUEST MODEL ---
 class AuditRequest(BaseModel):
@@ -123,7 +113,7 @@ class AuditResponse(BaseModel):
     compliance_results: List[ComplianceIssue] # List of violations (can be empty)
 
 
-# ========== STEP 7: DEFINE MAIN ENDPOINT ==========
+# ========== STEP 6: DEFINE MAIN ENDPOINT ==========
 @app.post("/audit", response_model=AuditResponse)
 # ↑ @app.post = Decorator that registers this function as a POST endpoint
 # ↑ "/audit" = URL path (http://localhost:8000/audit)
@@ -214,7 +204,7 @@ async def audit_video(request: AuditRequest):
         # }
 
 
-# ========== STEP 8: HEALTH CHECK ENDPOINT ==========
+# ========== STEP 7: HEALTH CHECK ENDPOINT ==========
 @app.get("/health")
 # ↑ GET request at http://localhost:8000/health
 def health_check():
@@ -239,7 +229,7 @@ def health_check():
     # FastAPI automatically converts dict to JSON response
 
 
-# ========== STEP 9: RUN INSTRUCTIONS (IN COMMENTS) ==========
+# ========== STEP 8: RUN INSTRUCTIONS (IN COMMENTS) ==========
 '''
 To execute: 
 uv run uvicorn backend.src.api.server:app --reload
@@ -282,7 +272,7 @@ Access points:
    - Converts Pydantic object to JSON
    - Sends HTTP response to client
    
-6. Azure Monitor captures:
+6. Langsmith captures:
    - Request duration
    - HTTP status code
    - Any errors

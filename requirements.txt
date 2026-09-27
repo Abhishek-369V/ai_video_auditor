@@ -2,6 +2,7 @@
 fastapi
 pydantic
 pydantic-settings
+uvicorn
 
 # Environment Variables & Testing
 python-dotenv
