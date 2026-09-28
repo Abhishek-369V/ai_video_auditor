@@ -1,13 +1,44 @@
 [project]
-name = "ai-video-auditor"
+name = "brand-guardian-ai"
 version = "1.0.0"
-description = "Agentic RAG pipeline that audits video ads against advertising and disclosure policies: Whisper + AWS Rekognition for extraction, FAISS retrieval, and a Groq LLM for compliance judgments, served via FastAPI."
+description = "Agentic AI system that audits video ads against advertising and disclosure policies using Whisper + AWS Rekognition for extraction, FAISS retrieval, and a Groq LLM for compliance judgments, served via FastAPI."
 readme = "README.md"
 authors = [
     { name = "Madanala Abhishek Varma", email = "abhishekmadanala@gmail.com" }
 ]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "boto3==1.43.103",
+    "faiss-cpu==1.15.1",
+    "fastapi==0.141.1",
+    "langchain==0.3.7",
+    "langchain-community==0.3.7",
+    "langchain-core==0.3.63",
+    "langchain-groq==0.2.1",
+    "langchain-huggingface==0.1.2",
+    "langchain-text-splitters==0.3.8",
+    "langgraph==0.5.4",
+    "langsmith==0.1.147",
+    "openai-whisper==20250625",
+    "pypdf==6.19.0",
+    "pydantic==2.13.5",
+    "python-dotenv==1.2.3",
+    "sentence-transformers==5.7.0",
+    "uvicorn==0.54.0",
+    "yt-dlp==2026.8.19",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "httpx==0.28.1",
+]
+
+eval = [
+    "ragas==0.2.6",
+    "datasets==5.0.1",
+    "langchain-openai==0.2.9",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
