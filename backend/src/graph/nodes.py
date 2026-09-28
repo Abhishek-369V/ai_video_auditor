@@ -30,12 +30,17 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
 
     local_filename = "temp_audit_video.mp4"
 
+    local_path = None
+
     try:
         vi_service = VideoIndexerService()
 
         # 1. DOWNLOAD
         if "youtube.com" in video_url or "youtu.be" in video_url:
-            local_path = vi_service.download_youtube_video(video_url, output_path=local_filename)
+            local_path = vi_service.download_youtube_video(
+                video_url,
+                output_path=local_filename,
+            )
         else:
             raise Exception("Please provide a valid YouTube URL for this test.")
 
@@ -44,17 +49,16 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
         logger.info(f"Local transcription complete ({len(transcript_text)} chars).")
 
         # 3. UPLOAD to S3 (for Rekognition OCR)
-        s3_video_key = vi_service.upload_video(local_path, video_name=video_id_input)
+        s3_video_key = vi_service.upload_video(
+            local_path, 
+            video_name=video_id_input
+        )
         logger.info(f"Upload Success. S3 video key: {s3_video_key}")
 
-        # 4. CLEANUP LOCAL FILE (safe now — transcription already done)
-        if os.path.exists(local_path):
-            os.remove(local_path)
-
-        # 5. WAIT & PROCESS (Rekognition text detection only)
+        # 4. WAIT & PROCESS (Rekognition text detection only)
         raw_insights = vi_service.wait_for_processing(s3_video_key)
 
-        # 6. EXTRACT (OCR + metadata) and inject the local transcript
+        # 5. EXTRACT (OCR + metadata) and inject the local transcript
         clean_data = vi_service.extract_data(raw_insights)
         clean_data["transcript"] = transcript_text
 
@@ -69,6 +73,11 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
             "transcript": "",
             "ocr_text": []
         }
+
+    finally:
+        # 6. CLEANUP LOCAL FILE (safe now -- transcription already done)
+        if local_path and os.path.exists(local_path):
+            os.remove(local_path)
 
 
 # --- NODE 2: THE COMPLIANCE AUDITOR ---

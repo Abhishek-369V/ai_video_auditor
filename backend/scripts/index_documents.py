@@ -1,3 +1,5 @@
+"""Build the FAISS index from the policy PDFs in backend/data."""
+
 import os
 import glob
 import logging

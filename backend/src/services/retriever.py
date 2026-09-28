@@ -8,6 +8,8 @@ logger = logging.getLogger("retriever")
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 class ComplianceRetriever:
+    """Similarity search over the FAISS index built by backend/scripts/index_documents.py."""
+
     def __init__(self, index_path=None):
         if index_path is None:
             index_path = Path(__file__).resolve().parent.parent.parent / "data" / "faiss_index"

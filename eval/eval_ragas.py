@@ -1,3 +1,11 @@
+"""RAGAS evaluation of the audit pipeline (faithfulness, answer relevancy, context precision).
+
+Usage (from the project root):
+    python -m eval.eval_ragas
+
+Requires: pip install -r requirements-eval.txt, and GROQ_API_KEY in .env.
+"""
+
 import os
 import json
 import logging
