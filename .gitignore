@@ -8,7 +8,7 @@ wheels/
 .pytest_cache/
 
 # Virtual environments
-.venv
+.venv/
 
 # Secrets
 .env

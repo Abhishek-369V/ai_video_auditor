@@ -14,7 +14,7 @@ langchain-groq==0.2.1
 langchain-huggingface==0.1.2
 langsmith==0.1.147
 faiss-cpu==1.15.1
-sentence-transformers=5.7.0
+sentence-transformers==5.7.0
 
 # Video ingestion
 boto3==1.43.103
