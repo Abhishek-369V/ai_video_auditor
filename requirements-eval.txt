@@ -1,0 +1,5 @@
+# Extra dependencies for the RAGAS evaluation (eval/eval_ragas.py).
+-r requirements.txt
+ragas==0.2.6
+datasets==5.0.1
+langchain-openai==0.2.9

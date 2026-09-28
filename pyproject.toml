@@ -1,17 +1,14 @@
 [project]
 name = "ai-video-auditor"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "Agentic RAG pipeline that audits video ads against advertising and disclosure policies: Whisper + AWS Rekognition for extraction, FAISS retrieval, and a Groq LLM for compliance judgments, served via FastAPI."
 readme = "README.md"
 authors = [
-    { name = "Abhishek-369V", email = "abhishekmadanala@gmail.com" }
+    { name = "Madanala Abhishek Varma", email = "abhishekmadanala@gmail.com" }
 ]
 requires-python = ">=3.11"
 dependencies = []
 
-[project.scripts]
-ai-video-auditor = "ai_video_auditor:main"
-
-[build-system]
-requires = ["uv_build>=0.12.5,<0.13.0"]
-build-backend = "uv_build"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,12 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.github/
+.env
+.pytest_cache/
+tests/
+eval/
+backend/data/faiss_index/
+*.mp4

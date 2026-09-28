@@ -1,41 +1,23 @@
-# Web Framework & Validation
-fastapi
-pydantic
-pydantic-settings
-uvicorn
+# API
+fastapi==0.141.1
+uvicorn==0.54.0
+pydantic==2.13.5
+python-dotenv==1.2.3
 
-# Environment Variables & Testing
-python-dotenv
-pytest
+# Orchestration, RAG and LLM
+langgraph==0.5.4
+langchain==0.3.7
+langchain-core==0.3.63
+langchain-community==0.3.7
+langchain-text-splitters==0.3.8
+langchain-groq==0.2.1
+langchain-huggingface==0.1.2
+langsmith==0.1.147
+faiss-cpu==1.15.1
+sentence-transformers=5.7.0
 
-# Observability & Tracing
-langsmith
-
-# Cloud & Storage
-boto3
-
-# LangChain & LangGraph Framework
-langchain
-langchain-core
-langchain-community
-langchain-text-splitters
-langgraph
-
-# LLM Providers
-langchain-groq
-groq
-langchain-aws
-langchain-openai
-
-# Audio Transcription
-openai-whisper
-
-# Vector Search & Embeddings
-faiss-cpu
-sentence-transformers
-langchain-huggingface
-
-# Ingestion, Parsing & HTTP
-requests
-yt-dlp
-pypdf
+# Video ingestion
+boto3==1.43.103
+yt-dlp==2026.8.19
+openai-whisper==20250625  
+pypdf==6.19.0
